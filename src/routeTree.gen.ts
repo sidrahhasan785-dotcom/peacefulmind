@@ -9,38 +9,193 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetPasswordRouteImport } from './routes/set-password'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSoundsRouteImport } from './routes/_authenticated/sounds'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
+import { Route as AuthenticatedComfortRouteImport } from './routes/_authenticated/comfort'
+import { Route as AuthenticatedBreatheRouteImport } from './routes/_authenticated/breathe'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
+const SetPasswordRoute = SetPasswordRouteImport.update({
+  id: '/set-password',
+  path: '/set-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSoundsRoute = AuthenticatedSoundsRouteImport.update({
+  id: '/sounds',
+  path: '/sounds',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHoldRoute = AuthenticatedHoldRouteImport.update({
+  id: '/hold',
+  path: '/hold',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedComfortRoute = AuthenticatedComfortRouteImport.update({
+  id: '/comfort',
+  path: '/comfort',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBreatheRoute = AuthenticatedBreatheRouteImport.update({
+  id: '/breathe',
+  path: '/breathe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/set-password': typeof SetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/breathe': typeof AuthenticatedBreatheRoute
+  '/comfort': typeof AuthenticatedComfortRoute
+  '/hold': typeof AuthenticatedHoldRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/journal': typeof AuthenticatedJournalRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/sounds': typeof AuthenticatedSoundsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/set-password': typeof SetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/breathe': typeof AuthenticatedBreatheRoute
+  '/comfort': typeof AuthenticatedComfortRoute
+  '/hold': typeof AuthenticatedHoldRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/journal': typeof AuthenticatedJournalRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/sounds': typeof AuthenticatedSoundsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/set-password': typeof SetPasswordRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/breathe': typeof AuthenticatedBreatheRoute
+  '/_authenticated/comfort': typeof AuthenticatedComfortRoute
+  '/_authenticated/hold': typeof AuthenticatedHoldRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/journal': typeof AuthenticatedJournalRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/sounds': typeof AuthenticatedSoundsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/set-password'
+    | '/admin'
+    | '/breathe'
+    | '/comfort'
+    | '/hold'
+    | '/home'
+    | '/journal'
+    | '/settings'
+    | '/sounds'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/set-password'
+    | '/admin'
+    | '/breathe'
+    | '/comfort'
+    | '/hold'
+    | '/home'
+    | '/journal'
+    | '/settings'
+    | '/sounds'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/set-password'
+    | '/_authenticated/admin'
+    | '/_authenticated/breathe'
+    | '/_authenticated/comfort'
+    | '/_authenticated/hold'
+    | '/_authenticated/home'
+    | '/_authenticated/journal'
+    | '/_authenticated/settings'
+    | '/_authenticated/sounds'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  SetPasswordRoute: typeof SetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/set-password': {
+      id: '/set-password'
+      path: '/set-password'
+      fullPath: '/set-password'
+      preLoaderRoute: typeof SetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +203,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/sounds': {
+      id: '/_authenticated/sounds'
+      path: '/sounds'
+      fullPath: '/sounds'
+      preLoaderRoute: typeof AuthenticatedSoundsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/journal': {
+      id: '/_authenticated/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hold': {
+      id: '/_authenticated/hold'
+      path: '/hold'
+      fullPath: '/hold'
+      preLoaderRoute: typeof AuthenticatedHoldRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/comfort': {
+      id: '/_authenticated/comfort'
+      path: '/comfort'
+      fullPath: '/comfort'
+      preLoaderRoute: typeof AuthenticatedComfortRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/breathe': {
+      id: '/_authenticated/breathe'
+      path: '/breathe'
+      fullPath: '/breathe'
+      preLoaderRoute: typeof AuthenticatedBreatheRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedBreatheRoute: typeof AuthenticatedBreatheRoute
+  AuthenticatedComfortRoute: typeof AuthenticatedComfortRoute
+  AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSoundsRoute: typeof AuthenticatedSoundsRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedBreatheRoute: AuthenticatedBreatheRoute,
+  AuthenticatedComfortRoute: AuthenticatedComfortRoute,
+  AuthenticatedHoldRoute: AuthenticatedHoldRoute,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedJournalRoute: AuthenticatedJournalRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSoundsRoute: AuthenticatedSoundsRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  SetPasswordRoute: SetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
