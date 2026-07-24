@@ -63,38 +63,40 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  /* QuietMind — moonlight night sky palette */
+  --background: oklch(0.20 0.05 265);
+  --foreground: oklch(0.98 0.01 250);
+  --card: oklch(0.28 0.06 265);
+  --card-foreground: oklch(0.98 0.01 250);
+  --popover: oklch(0.28 0.06 265);
+  --popover-foreground: oklch(0.98 0.01 250);
+  --primary: oklch(0.78 0.13 275);
+  --primary-foreground: oklch(0.16 0.05 265);
+  --secondary: oklch(0.32 0.06 265);
+  --secondary-foreground: oklch(0.98 0.01 250);
+  --muted: oklch(0.32 0.06 265);
+  --muted-foreground: oklch(0.85 0.02 250);
+  --accent: oklch(0.83 0.10 305);
+  --accent-foreground: oklch(0.16 0.05 265);
+  --destructive: oklch(0.65 0.20 25);
+  --destructive-foreground: oklch(0.98 0.01 250);
+  --border: oklch(0.35 0.06 265);
+  --input: oklch(0.35 0.06 265);
+  --ring: oklch(0.78 0.13 275);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar: oklch(0.24 0.05 265);
+  --sidebar-foreground: oklch(0.98 0.01 250);
+  --sidebar-primary: oklch(0.78 0.13 275);
+  --sidebar-primary-foreground: oklch(0.16 0.05 265);
+  --sidebar-accent: oklch(0.32 0.06 265);
+  --sidebar-accent-foreground: oklch(0.98 0.01 250);
+  --sidebar-border: oklch(0.35 0.06 265);
+  --sidebar-ring: oklch(0.78 0.13 275);
+  color-scheme: dark;
 }
 
 .dark {
@@ -140,5 +142,43 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior-y: none;
   }
+}
+
+/* QuietMind night sky */
+@keyframes qm-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+@keyframes qm-float {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(6px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+@keyframes qm-moon-glow {
+  0%, 100% { box-shadow: 0 0 60px 20px color-mix(in oklab, var(--primary) 40%, transparent), 0 0 120px 40px color-mix(in oklab, var(--accent) 20%, transparent); }
+  50% { box-shadow: 0 0 90px 30px color-mix(in oklab, var(--primary) 55%, transparent), 0 0 160px 60px color-mix(in oklab, var(--accent) 30%, transparent); }
+}
+@keyframes qm-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+@keyframes qm-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qm-star { position: absolute; background: white; border-radius: 9999px; animation: qm-twinkle 3s ease-in-out infinite; }
+.qm-particle { position: absolute; background: radial-gradient(circle, rgba(205,180,255,0.5), transparent 70%); border-radius: 9999px; animation: qm-float 12s ease-in-out infinite; pointer-events: none; }
+.qm-moon {
+  background: radial-gradient(circle at 35% 35%, #ffffff, #d9e2ff 55%, #8fa8ff 100%);
+  animation: qm-moon-glow 6s ease-in-out infinite;
+}
+.qm-fade-in { animation: qm-fade-in 0.6s ease-out both; }
+.qm-glass { background: color-mix(in oklab, var(--card) 70%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .qm-star, .qm-particle, .qm-moon, .qm-fade-in { animation: none !important; }
 }
