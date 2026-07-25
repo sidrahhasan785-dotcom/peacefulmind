@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
+import { listUsers, deleteUser } from "@/lib/quietmind.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — QuietMind" }] }),
@@ -17,23 +18,10 @@ type MediaRow = { id: string; kind: string; category: string | null; title: stri
 function Admin() {
   const { profile, loading } = useProfile();
   const navigate = useNavigate();
-  const [pinOk, setPinOk] = useState(false);
-  const [pin, setPin] = useState("");
 
   useEffect(() => {
     if (!loading && profile && profile.role !== "admin") navigate({ to: "/home" });
   }, [loading, profile, navigate]);
-
-  async function verifyPin() {
-    if (!profile) return;
-    // Re-verify PIN by signing in silently — proves current session PIN
-    const { error } = await supabase.auth.signInWithPassword({
-      email: `${profile.username.toLowerCase()}@quietmind.local`,
-      password: pin,
-    });
-    if (error) return toast.error("Wrong PIN.");
-    setPinOk(true);
-  }
 
   if (!profile || profile.role !== "admin") {
     return (
@@ -43,32 +31,10 @@ function Admin() {
     );
   }
 
-  if (!pinOk) {
-    return (
-      <AppShell back="/home" title="Admin">
-        <div className="pt-10 max-w-sm mx-auto qm-glass rounded-2xl border border-white/10 p-6">
-          <h2 className="text-lg font-semibold text-center">Enter your PIN to continue</h2>
-          <input
-            type="password"
-            inputMode="numeric"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className="mt-4 w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 tracking-widest text-center outline-none focus:ring-2 focus:ring-primary"
-          />
-          <button
-            onClick={verifyPin}
-            className="mt-3 w-full rounded-xl bg-primary text-primary-foreground py-3"
-          >
-            Unlock
-          </button>
-        </div>
-      </AppShell>
-    );
-  }
-
   return (
     <AppShell back="/home" title="Admin Dashboard">
       <div className="pt-4 space-y-8 max-w-2xl mx-auto pb-10">
+        <UsersBlock />
         <SettingsBlock />
         <UploadBlock />
         <MediaListBlock />
@@ -152,12 +118,14 @@ function UploadBlock() {
       return toast.error(upErr.message);
     }
     const { data: pub } = supabase.storage.from("quietmind-media").getPublicUrl(path);
+    // Admin uploads are official app content — user_id stays NULL so every user sees it.
     const { error: insErr } = await supabase.from("media").insert({
       kind,
       category: kind === "sleep" ? category : null,
       title,
       storage_path: path,
       public_url: pub.publicUrl,
+      user_id: null,
     });
     setUploading(false);
     if (insErr) return toast.error(insErr.message);
@@ -220,7 +188,8 @@ function MediaListBlock() {
   async function load() {
     const { data } = await supabase
       .from("media")
-      .select("id,kind,category,title,storage_path")
+      .select("id,kind,category,title,storage_path,user_id")
+      .is("user_id", null)
       .order("created_at", { ascending: false });
     setItems((data as MediaRow[]) || []);
   }
@@ -236,7 +205,7 @@ function MediaListBlock() {
   }
 
   return (
-    <Card title="Uploaded content">
+    <Card title="Official uploaded content">
       <div className="space-y-2 max-h-[300px] overflow-y-auto">
         {items.map((m) => (
           <div key={m.id} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
@@ -254,6 +223,69 @@ function MediaListBlock() {
         ))}
         {items.length === 0 && <p className="text-sm text-muted-foreground">Nothing uploaded yet.</p>}
       </div>
+    </Card>
+  );
+}
+
+type AppUser = { id: string; username: string; display_name: string; created_at: string; last_seen: string | null; role: string };
+
+function UsersBlock() {
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const { users } = await listUsers();
+      setUsers(users as AppUser[]);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function remove(u: AppUser) {
+    if (!confirm(`Permanently delete ${u.username}? All of their data will be removed.`)) return;
+    try {
+      await deleteUser({ data: { user_id: u.id } });
+      toast.success(`${u.username} deleted.`);
+      load();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Delete failed");
+    }
+  }
+
+  return (
+    <Card title={`Users (${users.length})`}>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : users.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No users yet.</p>
+      ) : (
+        <div className="space-y-2 max-h-[320px] overflow-y-auto">
+          {users.map((u) => (
+            <div key={u.id} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm">
+                  <span className="text-foreground">{u.display_name}</span>{" "}
+                  <span className="text-muted-foreground">@{u.username}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  joined {new Date(u.created_at).toLocaleDateString()}
+                  {u.last_seen ? ` · seen ${new Date(u.last_seen).toLocaleDateString()}` : ""}
+                </div>
+              </div>
+              <button onClick={() => remove(u)} className="text-destructive text-sm">
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
