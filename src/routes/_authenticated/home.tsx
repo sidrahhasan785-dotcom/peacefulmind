@@ -23,7 +23,6 @@ function Home() {
     subtitle: "You don't have to carry everything alone tonight.",
     wallpaper: "",
   });
-  const [partner, setPartner] = useState<{ display_name: string; last_seen: string | null; activity: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -39,30 +38,6 @@ function Home() {
     })();
   }, []);
 
-  useEffect(() => {
-    if (!profile) return;
-    (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name,last_seen,activity")
-        .neq("id", profile.id)
-        .maybeSingle();
-      if (data) setPartner(data);
-    })();
-    const iv = setInterval(async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name,last_seen,activity")
-        .neq("id", profile.id)
-        .maybeSingle();
-      if (data) setPartner(data);
-    }, 30_000);
-    return () => clearInterval(iv);
-  }, [profile]);
-
-  const partnerOnline =
-    partner?.last_seen && Date.now() - new Date(partner.last_seen).getTime() < 90_000;
-
   return (
     <AppShell showMoon>
       <div className="pt-6">
@@ -70,26 +45,6 @@ function Home() {
         <p className="mt-2 text-muted-foreground max-w-sm">{s.subtitle}</p>
         {profile && (
           <p className="mt-1 text-xs text-accent">Hi, {profile.display_name}.</p>
-        )}
-        {partner && (
-          <div className="mt-4 qm-glass rounded-2xl px-4 py-3 text-sm text-muted-foreground border border-white/5">
-            <div className="flex items-center gap-2">
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${partnerOnline ? "bg-emerald-400" : "bg-slate-500"}`}
-              />
-              <span className="text-foreground">{partner.display_name}</span>
-              <span>·</span>
-              <span>
-                {partnerOnline
-                  ? partner.activity
-                    ? partner.activity
-                    : "🟢 online"
-                  : partner.last_seen
-                    ? "🌙 last seen " + formatRelative(partner.last_seen)
-                    : "not seen yet"}
-              </span>
-            </div>
-          </div>
         )}
       </div>
 
@@ -131,14 +86,4 @@ function Tile({ to, icon, label }: { to: string; icon: string; label: string }) 
       <div className="text-lg font-medium">{label}</div>
     </Link>
   );
-}
-
-function formatRelative(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.round(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return new Date(iso).toLocaleString();
 }
