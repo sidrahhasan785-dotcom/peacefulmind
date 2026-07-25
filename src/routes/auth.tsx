@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { bootstrapAccounts } from "@/lib/quietmind.functions";
+import { signUp, resolveLogin } from "@/lib/quietmind.functions";
 import { NightSky } from "@/components/NightSky";
 import { toast } from "sonner";
 
@@ -10,66 +10,55 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — QuietMind" },
-      { name: "description", content: "Sign in to your private, calming space." },
+      { name: "description", content: "Sign in or create your calm, private space." },
     ],
   }),
   component: AuthPage,
 });
 
-function emailFor(u: string) {
-  return `${u.toLowerCase()}@quietmind.local`;
-}
-
 function AuthPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
-  const [pin, setPin] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        navigate({ to: "/home" });
-        return;
-      }
-      try {
-        await bootstrapAccounts();
-      } catch (e) {
-        console.error("bootstrap failed", e);
-      }
-      setReady(true);
+      if (data.user) navigate({ to: "/home" });
     })();
   }, [navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!username || !pin) return;
+    const u = username.trim();
+    if (!u || !password) return toast.error("Enter your username and password.");
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: emailFor(username.trim()),
-      password: pin,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error("Wrong username or PIN. Try again gently.");
-      return;
-    }
-    // Check must_change_password on profile
-    const { data: u } = await supabase.auth.getUser();
-    if (u.user) {
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("must_change_password")
-        .eq("id", u.user.id)
-        .maybeSingle();
-      if (p?.must_change_password) {
-        navigate({ to: "/set-password" });
-        return;
+    try {
+      if (mode === "signup") {
+        const name = fullName.trim();
+        if (!name) throw new Error("Please enter your full name.");
+        if (!/^[a-zA-Z0-9_]{3,30}$/.test(u))
+          throw new Error("Username: 3–30 letters, numbers or underscore.");
+        if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+        const { email } = await signUp({
+          data: { full_name: name, username: u, password },
+        });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw new Error(error.message);
+      } else {
+        const { email } = await resolveLogin({ data: { username: u } });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw new Error("Wrong username or password.");
       }
+      navigate({ to: "/home" });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Something went wrong.");
+    } finally {
+      setBusy(false);
     }
-    navigate({ to: "/home" });
   }
 
   return (
@@ -80,10 +69,25 @@ function AuthPage() {
           <div className="text-4xl">🌙</div>
           <h1 className="mt-3 text-2xl font-semibold text-foreground">QuietMind</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Welcome back. You're safe here.
+            {mode === "login" ? "Welcome back. You're safe here." : "Create your calm, private space."}
           </p>
         </div>
         <form onSubmit={submit} className="space-y-4">
+          {mode === "signup" && (
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                Full name
+              </label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Your name"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
               Username
@@ -94,35 +98,39 @@ function AuthPage() {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-foreground outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Sidrah or Priyanshu"
-              disabled={!ready}
+              placeholder="your_username"
             />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
-              PIN / Password
+              Password
             </label>
             <input
               type="password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              autoComplete="current-password"
-              inputMode="numeric"
-              className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-foreground outline-none focus:ring-2 focus:ring-primary tracking-widest"
-              placeholder="••••••"
-              disabled={!ready}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-foreground outline-none focus:ring-2 focus:ring-primary"
+              placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
-            disabled={busy || !ready}
+            disabled={busy}
             className="w-full rounded-xl bg-primary text-primary-foreground py-3 font-medium transition hover:brightness-110 disabled:opacity-60"
           >
-            {busy ? "Signing in..." : "Enter"}
+            {busy ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
           </button>
         </form>
         <p className="mt-5 text-center text-xs text-muted-foreground">
-          Priyanshu — first time? Use PIN <span className="font-mono text-accent">111111</span> and you'll set your own.
+          {mode === "login" ? "New here?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => setMode(mode === "login" ? "signup" : "login")}
+            className="text-accent underline underline-offset-2"
+          >
+            {mode === "login" ? "Create an account" : "Sign in"}
+          </button>
         </p>
       </div>
     </div>
