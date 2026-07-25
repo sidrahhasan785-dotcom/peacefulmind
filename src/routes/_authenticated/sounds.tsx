@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/sounds")({
   component: Sounds,
 });
 
-type Track = { id: string; title: string; category: string | null; storage_path: string };
+type Track = { id: string; title: string; category: string | null; storage_path: string; user_id: string | null };
 
 const CATEGORIES = ["All", "Rain", "Ocean", "Night", "Nature", "My recordings"];
 
@@ -18,6 +18,7 @@ function Sounds() {
   const [cat, setCat] = useState("All");
   const [current, setCurrent] = useState<Track | null>(null);
   const [url, setUrl] = useState<string | null>(null);
+  const [loadingUrl, setLoadingUrl] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -28,16 +29,18 @@ function Sounds() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("media")
-        .select("id,title,category,storage_path,kind")
+        .select("id,title,category,storage_path,kind,user_id")
         .in("kind", ["sleep", "music", "voice"])
         .order("created_at", { ascending: false });
+      if (error) console.error("[sounds] load failed", error);
       setTracks(((data as any[]) || []).map((d) => ({
         id: d.id,
         title: d.title,
         category: d.kind === "voice" ? "My recordings" : d.category,
         storage_path: d.storage_path,
+        user_id: d.user_id ?? null,
       })));
     })();
   }, []);
@@ -49,10 +52,30 @@ function Sounds() {
 
   async function pick(t: Track) {
     setCurrent(t);
-    const { url } = await signMediaUrl({ data: { path: t.storage_path } });
-    setUrl(url);
-    setTimeout(() => audioRef.current?.play().catch(() => {}), 50);
+    setUrl(null);
+    setLoadingUrl(true);
+    try {
+      const { url: signed } = await signMediaUrl({ data: { path: t.storage_path } });
+      if (!signed) throw new Error("Empty signed URL");
+      setUrl(signed);
+    } catch (err) {
+      console.error("[sounds] failed to get signed URL", err);
+      setLoadingUrl(false);
+      return;
+    }
   }
+
+  // Once the audio element has a real URL, try to play and log any errors.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !url) return;
+    setLoadingUrl(false);
+    el.load();
+    const p = el.play();
+    if (p && typeof p.catch === "function") {
+      p.catch((err) => console.error("[sounds] play() rejected", err));
+    }
+  }, [url]);
 
   function toggle() {
     const el = audioRef.current;
@@ -138,10 +161,16 @@ function Sounds() {
           <audio
             ref={audioRef}
             src={url}
+            preload="auto"
+            crossOrigin="anonymous"
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
             onLoadedMetadata={(e) => setDuration((e.target as HTMLAudioElement).duration || 0)}
             onTimeUpdate={(e) => setProgress((e.target as HTMLAudioElement).currentTime)}
+            onError={(e) => {
+              const audioEl = e.currentTarget as HTMLAudioElement;
+              console.error("[sounds] <audio> error", audioEl.error, "src=", audioEl.currentSrc);
+            }}
           />
           <div className="flex items-center justify-between">
             <div className="min-w-0">
@@ -207,6 +236,11 @@ function Sounds() {
               </button>
             )}
           </div>
+        </div>
+      )}
+      {current && !url && loadingUrl && (
+        <div className="fixed bottom-0 inset-x-0 z-10 qm-glass border-t border-white/10 px-5 py-4 text-sm text-muted-foreground text-center">
+          Preparing {current.title}…
         </div>
       )}
     </AppShell>
