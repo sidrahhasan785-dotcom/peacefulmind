@@ -149,3 +149,62 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Admin only — list all journal entries with author info, optional username filter. */
+export const adminListJournal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { search?: string }) =>
+    z.object({ search: z.string().optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const [{ data: entries }, { data: profiles }] = await Promise.all([
+      context.supabase
+        .from("journal_entries")
+        .select("id,body,user_id,created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      context.supabase.from("profiles").select("id,username,display_name"),
+    ]);
+    const pMap = new Map<string, { username: string; display_name: string }>();
+    (profiles || []).forEach((p: any) => pMap.set(p.id, p));
+    const search = (data.search || "").trim().toLowerCase();
+    const rows = (entries || []).map((e: any) => ({
+      ...e,
+      username: pMap.get(e.user_id)?.username || "unknown",
+      display_name: pMap.get(e.user_id)?.display_name || "",
+    }));
+    return {
+      entries: search
+        ? rows.filter(
+            (r) =>
+              r.username.toLowerCase().includes(search) ||
+              r.display_name.toLowerCase().includes(search),
+          )
+        : rows,
+    };
+  });
+
+/** Admin only — delete a single journal entry. */
+export const adminDeleteJournal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { entry_id: string }) =>
+    z.object({ entry_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { error } = await context.supabase
+      .from("journal_entries")
+      .delete()
+      .eq("id", data.entry_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
