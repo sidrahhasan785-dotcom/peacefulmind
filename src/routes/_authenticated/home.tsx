@@ -54,6 +54,7 @@ function Home() {
         <Tile to="/journal" icon="📝" label="Empty Your Mind" />
         <Tile to="/comfort" icon="💌" label="Comfort Corner" />
         <Tile to="/sounds" icon="🎵" label="Sleep Sounds" />
+        <Tile to="/heart" icon="💖" label="Heart Constellation" />
       </div>
 
       <div className="mt-8 flex justify-center gap-3">
