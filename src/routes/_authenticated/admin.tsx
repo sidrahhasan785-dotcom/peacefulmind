@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import { listUsers, deleteUser } from "@/lib/quietmind.functions";
+import { adminListJournal, adminDeleteJournal } from "@/lib/quietmind.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — QuietMind" }] }),
@@ -36,8 +37,10 @@ function Admin() {
       <div className="pt-4 space-y-8 max-w-2xl mx-auto pb-10">
         <UsersBlock />
         <SettingsBlock />
+        <HeartConstellationBlock />
         <UploadBlock />
         <MediaListBlock />
+        <JournalAdminBlock />
         <LettersBlock />
         <MessagesBlock />
       </div>
