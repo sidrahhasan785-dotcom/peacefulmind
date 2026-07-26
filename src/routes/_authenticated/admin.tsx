@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import { listUsers, deleteUser } from "@/lib/quietmind.functions";
+import { adminListJournal, adminDeleteJournal } from "@/lib/quietmind.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — QuietMind" }] }),
@@ -36,8 +37,10 @@ function Admin() {
       <div className="pt-4 space-y-8 max-w-2xl mx-auto pb-10">
         <UsersBlock />
         <SettingsBlock />
+        <HeartConstellationBlock />
         <UploadBlock />
         <MediaListBlock />
+        <JournalAdminBlock />
         <LettersBlock />
         <MessagesBlock />
       </div>
@@ -93,6 +96,260 @@ function SettingsBlock() {
       <button onClick={save} className="mt-3 rounded-xl bg-primary text-primary-foreground px-4 py-2">
         Save
       </button>
+    </Card>
+  );
+}
+
+type HcSettings = {
+  hc_enabled: string;
+  hc_colors: string;
+  hc_count: string;
+  hc_speed: string;
+  hc_message: string;
+  hc_song_path: string;
+};
+
+function HeartConstellationBlock() {
+  const [s, setS] = useState<HcSettings>({
+    hc_enabled: "true",
+    hc_colors: "#ff6b9d,#c084fc,#f9a8d4",
+    hc_count: "24",
+    hc_speed: "1",
+    hc_message: "",
+    hc_song_path: "",
+  });
+  const [songTitle, setSongTitle] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const { data } = await supabase.from("app_settings").select("key,value");
+    const m = Object.fromEntries((data || []).map((r) => [r.key, r.value]));
+    setS({
+      hc_enabled: m.hc_enabled ?? "true",
+      hc_colors: m.hc_colors ?? "#ff6b9d,#c084fc,#f9a8d4",
+      hc_count: m.hc_count ?? "24",
+      hc_speed: m.hc_speed ?? "1",
+      hc_message: m.hc_message ?? "",
+      hc_song_path: m.hc_song_path ?? "",
+    });
+  }
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function save() {
+    setBusy(true);
+    const rows = (Object.keys(s) as (keyof HcSettings)[]).map((k) => ({
+      key: k,
+      value: s[k],
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase.from("app_settings").upsert(rows);
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Heart Constellation saved.");
+  }
+
+  async function uploadSong() {
+    if (!file || !songTitle) return toast.error("Add a title and choose an audio file.");
+    setBusy(true);
+    const ext = file.name.split(".").pop() || "mp3";
+    const path = `heart/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("quietmind-media")
+      .upload(path, file, { cacheControl: "3600", upsert: false });
+    if (upErr) {
+      setBusy(false);
+      return toast.error(upErr.message);
+    }
+    const { data: pub } = supabase.storage.from("quietmind-media").getPublicUrl(path);
+    await supabase.from("media").insert({
+      kind: "music",
+      category: "Heart Constellation",
+      title: songTitle,
+      storage_path: path,
+      public_url: pub.publicUrl,
+      user_id: null,
+    });
+    // If there was a previous song, remove its storage file.
+    if (s.hc_song_path && s.hc_song_path !== path) {
+      await supabase.storage.from("quietmind-media").remove([s.hc_song_path]).catch(() => {});
+    }
+    await supabase.from("app_settings").upsert([
+      { key: "hc_song_path", value: path, updated_at: new Date().toISOString() },
+    ]);
+    setS((prev) => ({ ...prev, hc_song_path: path }));
+    setFile(null);
+    setSongTitle("");
+    setBusy(false);
+    toast.success("Song uploaded.");
+  }
+
+  return (
+    <Card title="Heart Constellation">
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={s.hc_enabled === "true"}
+          onChange={(e) => setS({ ...s, hc_enabled: e.target.checked ? "true" : "false" })}
+        />
+        Enabled for all users
+      </label>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-muted-foreground">Heart count</label>
+          <input
+            type="number"
+            min={6}
+            max={60}
+            value={s.hc_count}
+            onChange={(e) => setS({ ...s, hc_count: e.target.value })}
+            className="mt-1 w-full rounded-xl bg-secondary/60 border border-border px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Animation speed (0.3–3)</label>
+          <input
+            type="number"
+            step="0.1"
+            min={0.3}
+            max={3}
+            value={s.hc_speed}
+            onChange={(e) => setS({ ...s, hc_speed: e.target.value })}
+            className="mt-1 w-full rounded-xl bg-secondary/60 border border-border px-3 py-2"
+          />
+        </div>
+      </div>
+
+      <label className="mt-3 block text-xs text-muted-foreground">Heart colours (comma-separated hex)</label>
+      <input
+        value={s.hc_colors}
+        onChange={(e) => setS({ ...s, hc_colors: e.target.value })}
+        placeholder="#ff6b9d,#c084fc,#f9a8d4"
+        className="mt-1 w-full rounded-xl bg-secondary/60 border border-border px-3 py-2"
+      />
+      <div className="mt-2 flex gap-2">
+        {s.hc_colors.split(",").map((c, i) => (
+          <span key={i} className="w-6 h-6 rounded-full border border-white/20" style={{ background: c.trim() }} />
+        ))}
+      </div>
+
+      <label className="mt-3 block text-xs text-muted-foreground">Ending message</label>
+      <textarea
+        value={s.hc_message}
+        onChange={(e) => setS({ ...s, hc_message: e.target.value })}
+        className="mt-1 w-full rounded-xl bg-secondary/60 border border-border px-3 py-2 min-h-[80px]"
+      />
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-secondary/30 p-3">
+        <div className="text-xs text-muted-foreground mb-2">Song</div>
+        {s.hc_song_path ? (
+          <div className="text-xs text-accent break-all">Current: {s.hc_song_path}</div>
+        ) : (
+          <div className="text-xs text-muted-foreground italic">No song uploaded.</div>
+        )}
+        <input
+          value={songTitle}
+          onChange={(e) => setSongTitle(e.target.value)}
+          placeholder="Song title"
+          className="mt-2 w-full rounded-xl bg-secondary/60 border border-border px-3 py-2"
+        />
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="mt-2 block w-full text-sm text-muted-foreground"
+        />
+        <button
+          onClick={uploadSong}
+          disabled={busy}
+          className="mt-2 rounded-xl qm-glass px-3 py-2 text-sm disabled:opacity-60"
+        >
+          Upload song
+        </button>
+      </div>
+
+      <button
+        onClick={save}
+        disabled={busy}
+        className="mt-4 rounded-xl bg-primary text-primary-foreground px-4 py-2 disabled:opacity-60"
+      >
+        Save settings
+      </button>
+    </Card>
+  );
+}
+
+type JournalRow = { id: string; body: string; user_id: string; created_at: string; username: string; display_name: string };
+
+function JournalAdminBlock() {
+  const [search, setSearch] = useState("");
+  const [rows, setRows] = useState<JournalRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const { entries } = await adminListJournal({ data: { search } });
+      setRows(entries as JournalRow[]);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to load journal");
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function del(id: string) {
+    if (!confirm("Delete this entry? This cannot be undone.")) return;
+    try {
+      await adminDeleteJournal({ data: { entry_id: id } });
+      setRows((prev) => prev.filter((r) => r.id !== id));
+      toast.success("Deleted.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Delete failed");
+    }
+  }
+
+  return (
+    <Card title={`Journal management (${rows.length})`}>
+      <div className="flex gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by username or name"
+          className="flex-1 rounded-xl bg-secondary/60 border border-border px-3 py-2"
+          onKeyDown={(e) => e.key === "Enter" && load()}
+        />
+        <button onClick={load} className="rounded-xl qm-glass px-3 py-2 text-sm">
+          Search
+        </button>
+      </div>
+      {loading ? (
+        <p className="mt-3 text-sm text-muted-foreground">Loading…</p>
+      ) : rows.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">No entries.</p>
+      ) : (
+        <div className="mt-3 space-y-2 max-h-[400px] overflow-y-auto">
+          {rows.map((r) => (
+            <div key={r.id} className="rounded-lg bg-secondary/40 px-3 py-2">
+              <div className="flex items-center justify-between text-xs">
+                <span>
+                  <span className="text-foreground">@{r.username}</span>{" "}
+                  <span className="text-muted-foreground">· {new Date(r.created_at).toLocaleString()}</span>
+                </span>
+                <button onClick={() => del(r.id)} className="text-destructive">Delete</button>
+              </div>
+              <p className="mt-1 text-sm whitespace-pre-wrap line-clamp-6">{r.body}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

@@ -18,6 +18,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
+import { Route as AuthenticatedHeartRouteImport } from './routes/_authenticated/heart'
 import { Route as AuthenticatedComfortRouteImport } from './routes/_authenticated/comfort'
 import { Route as AuthenticatedBreatheRouteImport } from './routes/_authenticated/breathe'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -66,6 +67,11 @@ const AuthenticatedHoldRoute = AuthenticatedHoldRouteImport.update({
   path: '/hold',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHeartRoute = AuthenticatedHeartRouteImport.update({
+  id: '/heart',
+  path: '/heart',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedComfortRoute = AuthenticatedComfortRouteImport.update({
   id: '/comfort',
   path: '/comfort',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/breathe': typeof AuthenticatedBreatheRoute
   '/comfort': typeof AuthenticatedComfortRoute
+  '/heart': typeof AuthenticatedHeartRoute
   '/hold': typeof AuthenticatedHoldRoute
   '/home': typeof AuthenticatedHomeRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/breathe': typeof AuthenticatedBreatheRoute
   '/comfort': typeof AuthenticatedComfortRoute
+  '/heart': typeof AuthenticatedHeartRoute
   '/hold': typeof AuthenticatedHoldRoute
   '/home': typeof AuthenticatedHomeRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/breathe': typeof AuthenticatedBreatheRoute
   '/_authenticated/comfort': typeof AuthenticatedComfortRoute
+  '/_authenticated/heart': typeof AuthenticatedHeartRoute
   '/_authenticated/hold': typeof AuthenticatedHoldRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/breathe'
     | '/comfort'
+    | '/heart'
     | '/hold'
     | '/home'
     | '/journal'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/breathe'
     | '/comfort'
+    | '/heart'
     | '/hold'
     | '/home'
     | '/journal'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/breathe'
     | '/_authenticated/comfort'
+    | '/_authenticated/heart'
     | '/_authenticated/hold'
     | '/_authenticated/home'
     | '/_authenticated/journal'
@@ -238,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHoldRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/heart': {
+      id: '/_authenticated/heart'
+      path: '/heart'
+      fullPath: '/heart'
+      preLoaderRoute: typeof AuthenticatedHeartRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/comfort': {
       id: '/_authenticated/comfort'
       path: '/comfort'
@@ -266,6 +285,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedBreatheRoute: typeof AuthenticatedBreatheRoute
   AuthenticatedComfortRoute: typeof AuthenticatedComfortRoute
+  AuthenticatedHeartRoute: typeof AuthenticatedHeartRoute
   AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
@@ -277,6 +297,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedBreatheRoute: AuthenticatedBreatheRoute,
   AuthenticatedComfortRoute: AuthenticatedComfortRoute,
+  AuthenticatedHeartRoute: AuthenticatedHeartRoute,
   AuthenticatedHoldRoute: AuthenticatedHoldRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
@@ -296,13 +317,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
