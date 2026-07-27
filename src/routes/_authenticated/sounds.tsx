@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
-import { signMediaUrl } from "@/lib/quietmind.functions";
+import { signMedia } from "@/lib/media";
 
 export const Route = createFileRoute("/_authenticated/sounds")({
   head: () => ({ meta: [{ title: "Sleep Sounds — QuietMind" }] }),
