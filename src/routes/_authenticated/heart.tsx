@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
-import { signMediaUrl } from "@/lib/quietmind.functions";
+import { signMedia } from "@/lib/media";
 
 export const Route = createFileRoute("/_authenticated/heart")({
   head: () => ({ meta: [{ title: "Heart Constellation — QuietMind" }] }),
@@ -46,7 +46,7 @@ function HeartPage() {
       setCfg(c);
       if (c.songPath) {
         try {
-          const { url } = await signMediaUrl({ data: { path: c.songPath } });
+          const url = await signMedia(c.songPath);
           setSongUrl(url);
         } catch (e) {
           console.error("[heart] sign failed", e);
@@ -139,7 +139,7 @@ function HeartPage() {
   }
 
   return (
-    <AppShell back="/home" activity="💖 Heart Constellation">
+    <AppShell back="/home" activity="💖 Heart Constellation" hideBottomNav={phase !== "idle"}>
       <div className="pt-4">
         <h1 className="text-2xl font-semibold qm-shimmer-text">Heart Constellation</h1>
         <p className="mt-2 text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { NightSky } from "./NightSky";
+import { BottomNav } from "./BottomNav";
 import { useEffect, type ReactNode } from "react";
 import { heartbeat } from "@/lib/quietmind.functions";
 
@@ -10,12 +11,14 @@ export function AppShell({
   back,
   activity,
   showMoon = true,
+  hideBottomNav = false,
 }: {
   children: ReactNode;
   title?: string;
   back?: string;
   activity?: string | null;
   showMoon?: boolean;
+  hideBottomNav?: boolean;
 }) {
   const navigate = useNavigate();
   useEffect(() => {
@@ -50,7 +53,8 @@ export function AppShell({
           Sign out
         </button>
       </header>
-      <main className="px-5 pb-[calc(env(safe-area-inset-bottom)+40px)] qm-fade-in">{children}</main>
+      <main className="px-5 pb-[calc(env(safe-area-inset-bottom)+110px)] qm-fade-in">{children}</main>
+      {!hideBottomNav && <BottomNav />}
     </div>
   );
 }

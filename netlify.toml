@@ -1,0 +1,21 @@
+# Netlify build config for QuietMind (TanStack Start + Nitro)
+#
+# See NETLIFY.md for the full setup checklist, including the required
+# Supabase environment variables.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Force Nitro to build for the Netlify runtime instead of the default
+  # Cloudflare preset used in the Lovable preview.
+  NITRO_PRESET = "netlify"
+  NODE_VERSION = "20"
+
+# TanStack Router handles client-side routing; SPA fallback for any
+# unmatched path so deep links work after a refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

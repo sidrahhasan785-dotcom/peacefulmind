@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
-import { signMediaUrl } from "@/lib/quietmind.functions";
+import { signMedia } from "@/lib/media";
 
 export const Route = createFileRoute("/_authenticated/sounds")({
   head: () => ({ meta: [{ title: "Sleep Sounds — QuietMind" }] }),
@@ -55,7 +55,7 @@ function Sounds() {
     setUrl(null);
     setLoadingUrl(true);
     try {
-      const { url: signed } = await signMediaUrl({ data: { path: t.storage_path } });
+      const signed = await signMedia(t.storage_path);
       if (!signed) throw new Error("Empty signed URL");
       setUrl(signed);
     } catch (err) {
