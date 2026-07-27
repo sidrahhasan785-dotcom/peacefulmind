@@ -139,7 +139,7 @@ function HeartPage() {
   }
 
   return (
-    <AppShell back="/home" activity="💖 Heart Constellation">
+    <AppShell back="/home" activity="💖 Heart Constellation" hideBottomNav={phase !== "idle"}>
       <div className="pt-4">
         <h1 className="text-2xl font-semibold qm-shimmer-text">Heart Constellation</h1>
         <p className="mt-2 text-sm text-muted-foreground">
