@@ -46,7 +46,7 @@ function HeartPage() {
       setCfg(c);
       if (c.songPath) {
         try {
-          const { url } = await signMediaUrl({ data: { path: c.songPath } });
+          const url = await signMedia(c.songPath);
           setSongUrl(url);
         } catch (e) {
           console.error("[heart] sign failed", e);

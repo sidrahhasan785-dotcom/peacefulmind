@@ -29,7 +29,7 @@ function Hold() {
         supabase.from("hold_messages").select("text").order("sort_order"),
       ]);
       if (media) {
-        const { url } = await signMediaUrl({ data: { path: media.storage_path } });
+        const url = await signMedia(media.storage_path);
         setUrl(url);
       }
       if (msgs) setMessages(msgs.map((m) => m.text));

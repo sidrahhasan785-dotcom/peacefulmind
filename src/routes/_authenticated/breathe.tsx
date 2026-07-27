@@ -28,7 +28,7 @@ function Breathe() {
         setHasAudio(false);
         return;
       }
-      const { url } = await signMediaUrl({ data: { path: data.storage_path } });
+      const url = await signMedia(data.storage_path);
       setUrl(url);
     })();
   }, []);

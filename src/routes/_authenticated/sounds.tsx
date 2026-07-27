@@ -55,7 +55,7 @@ function Sounds() {
     setUrl(null);
     setLoadingUrl(true);
     try {
-      const { url: signed } = await signMediaUrl({ data: { path: t.storage_path } });
+      const signed = await signMedia(t.storage_path);
       if (!signed) throw new Error("Empty signed URL");
       setUrl(signed);
     } catch (err) {
